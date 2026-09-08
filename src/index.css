@@ -1,29 +1,45 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+/* FireWatch Design System — Tactical Glassmorphism + Technical Precision UI
+   Tokens ported from the Stitch reference (firewatch_design_system/DESIGN.md). */
 
 :root {
-  --bg: #0a1512;
-  --bg-raised: #0f1c18;
-  --panel: #11201b;
-  --panel-soft: #16261f;
-  --border: #24382f;
-  --border-strong: #33503f;
+  /* ---- Canvas / surfaces ---- */
+  --bg: #070a0f; /* Canvas / map underlay — true base black-blue */
+  --bg-raised: #0b0f17; /* Surface deep — sheet bases, drawer layers */
+  --panel: #131b26; /* Surface elevated — default cards, toolbars */
+  --panel-soft: #1c2636; /* Surface raised — active inputs, popovers */
+  --panel-glass: rgba(19, 27, 38, 0.76); /* Layer 2 — frosted glass widgets */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --text-primary: #eef4ef;
-  --text-secondary: #b7c6bb;
-  --text-muted: #748a7c;
+  /* ---- Text hierarchy ---- */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
 
-  --safe: #3fa78a;
-  --safe-dim: #234d40;
-  --risk-low: #5aa88f;
-  --risk-medium: #e0a53c;
-  --risk-high: #e0472c;
-  --risk-high-glow: rgba(224, 71, 44, 0.35);
+  /* ---- Semantic hazard tiers ---- */
+  --safe: #10b981; /* Corridor emerald — safe routes, muster points */
+  --safe-dim: #113127;
+  --risk-low: #10b981;
+  --risk-medium: #f59e0b; /* Warning amber — Siaga / advisory */
+  --risk-high: #ef4444; /* Primary / active threat — Awas / evacuation */
+  --risk-high-glow: rgba(239, 68, 68, 0.35);
 
-  --ember: #ff7a45;
-  --ember-dim: #7a3a24;
+  --ember: #f97316; /* Secondary / thermal activity — hotspots, lava */
+  --ember-dim: #4a2410;
+  --plume: #a855f7; /* Ash / SO2 / air-quality kill zones */
+  --plume-dim: #3a1f57;
 
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  /* ---- Type engines ---- */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Chivo", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ---- Shape & spacing ---- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-pill: 9999px;
+  --hud-inset: 1rem;
 
   color-scheme: dark;
 }
@@ -74,6 +90,23 @@ a {
 :focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
+}
+
+/* Material Symbols baseline so icon glyphs render filled-outline & aligned. */
+.msi {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
 }
 
 @media (prefers-reduced-motion: reduce) {

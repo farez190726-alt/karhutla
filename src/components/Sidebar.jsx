@@ -26,7 +26,9 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <div>
-        <div className="sidebar-section-title">Ringkasan hari ini</div>
+        <div className="sidebar-section-title">
+          <span className="msi">query_stats</span> Ringkasan hari ini
+        </div>
         <div className="stat-grid">
           <div className="stat-card high">
             <div className="stat-value">{summary.high}</div>
@@ -52,7 +54,9 @@ export default function Sidebar({
       </div>
 
       <div>
-        <div className="sidebar-section-title">Lapisan peta</div>
+        <div className="sidebar-section-title">
+          <span className="msi">layers</span> Lapisan peta
+        </div>
         <div className="filter-list">
           {layerToggles.map((l) => (
             <label className="filter-row layer-row" key={l.key}>
@@ -68,7 +72,9 @@ export default function Sidebar({
       </div>
 
       <div>
-        <div className="sidebar-section-title">Saring hotspot</div>
+        <div className="sidebar-section-title">
+          <span className="msi">filter_alt</span> Saring hotspot
+        </div>
         <div className="filter-list">
           {filters.map((f) => (
             <div
@@ -87,7 +93,9 @@ export default function Sidebar({
       </div>
 
       <div>
-        <div className="sidebar-section-title">Gunung berapi</div>
+        <div className="sidebar-section-title">
+          <span className="msi">volcano</span> Gunung berapi
+        </div>
         <div className="filter-list">
           {sortedVolcanoes.map((v) => (
             <div
@@ -99,7 +107,7 @@ export default function Sidebar({
               onKeyDown={(e) => e.key === "Enter" && onSelectVolcano(v.id)}
             >
               <span>{v.name}</span>
-              <span className="volcano-level" style={{ color: v.levelColor }}>
+              <span className="tier-pill" style={{ "--tier-color": v.levelColor }}>
                 {v.levelLabel}
               </span>
             </div>
@@ -108,7 +116,9 @@ export default function Sidebar({
       </div>
 
       <div>
-        <div className="sidebar-section-title">Legenda</div>
+        <div className="sidebar-section-title">
+          <span className="msi">map</span> Legenda
+        </div>
         <div className="legend">
           <div className="legend-row">
             <span className="legend-dot" style={{ background: "var(--risk-high)" }} />

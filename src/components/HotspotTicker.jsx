@@ -1,12 +1,14 @@
 import RiskPill from "./RiskPill";
 import { formatTimeAgo } from "../utils/geo";
 
-export default function HotspotTicker({ hotspots, selectedId, onSelect, nowMs }) {
+export default function HotspotTicker({ hotspots, selectedId, onSelect, nowMs, expanded }) {
   const sorted = [...hotspots].sort((a, b) => new Date(b.acquired) - new Date(a.acquired));
 
   return (
-    <div className="ticker">
-      <div className="ticker-title">Hotspot terbaru</div>
+    <div className={`ticker${expanded ? " ticker-expanded" : ""}`}>
+      <div className="ticker-title">
+        <span className="msi">local_fire_department</span> Hotspot terbaru
+      </div>
       {sorted.map((h) => (
         <div
           key={h.id}

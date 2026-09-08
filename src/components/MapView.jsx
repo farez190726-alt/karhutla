@@ -1,13 +1,21 @@
 import { useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import WindLayer from "./WindLayer";
 
 const RISK_COLOR = {
-  high: "#e0472c",
-  medium: "#e0a53c",
-  low: "#5aa88f",
+  high: "#ef4444",
+  medium: "#f59e0b",
+  low: "#10b981",
+};
+
+// Base pixel size + glow spread per risk tier, so "tinggi/sedang/rendah" read as
+// visually distinct fire icons at a glance, not just three colors of the same dot.
+const RISK_FIRE_STYLE = {
+  high: { size: 30, glow: 14, pulse: true },
+  medium: { size: 24, glow: 9, pulse: false },
+  low: { size: 18, glow: 5, pulse: false },
 };
 
 const INDONESIA_CENTER = [-1.5, 116];
@@ -17,11 +25,30 @@ function volcanoIcon(color, selected) {
   return L.divIcon({
     className: "volcano-icon",
     html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24">
-        <path d="M12 3 L21 20 H3 Z" fill="${color}" stroke="#0a1512" stroke-width="1.2" />
-        <path d="M12 3 L14.8 8.5 L9.2 8.5 Z" fill="#0a1512" opacity="0.55" />
+        <path d="M12 3 L21 20 H3 Z" fill="${color}" stroke="#070a0f" stroke-width="1.2" />
+        <path d="M12 3 L14.8 8.5 L9.2 8.5 Z" fill="#070a0f" opacity="0.55" />
       </svg>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size * 0.9],
+  });
+}
+
+// One flame glyph, recolored/resized/animated per risk tier so "high" fires read
+// as bigger, brighter and (via CSS) flickering, while "low" is a small, calm ember.
+function fireIcon(risk, selected) {
+  const base = RISK_FIRE_STYLE[risk] || RISK_FIRE_STYLE.low;
+  const size = selected ? base.size + 8 : base.size;
+  const color = RISK_COLOR[risk];
+  return L.divIcon({
+    className: `fire-icon fire-icon--${risk}${base.pulse ? " fire-icon--pulse" : ""}${selected ? " fire-icon--selected" : ""}`,
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="filter: drop-shadow(0 0 ${base.glow}px ${color}99);">
+        <path d="M12 2.2c.4 2.4-1 3.6-2.1 4.9C8.6 8.5 7.6 10 7.6 12.2c0 3 2 5.3 4.4 5.3.6 0 1.1-.1 1.6-.3-1-.6-1.7-1.7-1.7-3 0-1.4.8-2.2 1.6-3.1.4-.5.9-1 1.1-1.7.6 1 1 2.1 1 3.4 0 3.3-2.4 5.9-5.7 6.5.6.2 1.3.3 2 .3 4 0 7.1-3.1 7.1-7.2 0-3.3-1.6-5.7-3.4-7.7C13.9 3.4 12.9 2.7 12 2.2z"
+          fill="${color}" stroke="#070a0f" stroke-width="0.6" />
+        <path d="M12 12.6c.3.9.1 1.6-.4 2.2-.1-1-.5-1.5-.9-2-.4.4-.7.9-.7 1.5 0 1 .7 1.7 1.6 1.7 1 0 1.8-.8 1.8-1.9 0-.7-.3-1.2-1.4-1.5z"
+          fill="#2a1208" opacity="0.7" />
+      </svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size * 0.92],
   });
 }
 
@@ -36,6 +63,19 @@ function FlyToSelected({ target }) {
   return null;
 }
 
+// Flies back to the default Indonesia-wide view whenever the "pusatkan peta"
+// toolbar button is pressed (resetKey increments), without remounting the map.
+function ResetView({ resetKey }) {
+  const map = useMap();
+  useEffect(() => {
+    if (resetKey > 0) {
+      map.flyTo(INDONESIA_CENTER, 5, { duration: 0.7 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
+  return null;
+}
+
 export default function MapView({
   hotspots,
   volcanoes,
@@ -45,6 +85,7 @@ export default function MapView({
   showHotspots,
   showVolcanoes,
   showWind,
+  resetKey = 0,
 }) {
   const flyTarget = useMemo(() => {
     if (!selected) return null;
@@ -55,7 +96,9 @@ export default function MapView({
 
   return (
     <div className="map-wrap">
-      <span className="map-scan-hint">Peta langsung &middot; OpenStreetMap / CARTO</span>
+      <span className="map-scan-hint">
+        <span className="msi">satellite_alt</span> LIVE &middot; OpenStreetMap / CARTO
+      </span>
       <MapContainer
         center={INDONESIA_CENTER}
         zoom={5}
@@ -76,28 +119,21 @@ export default function MapView({
         {showHotspots &&
           hotspots.map((h) => {
             const isSelected = selected?.kind === "hotspot" && selected.id === h.id;
-            const color = RISK_COLOR[h.risk];
             return (
-              <CircleMarker
+              <Marker
                 key={h.id}
-                center={[h.lat, h.lon]}
-                radius={isSelected ? 11 : h.risk === "high" ? 7 : 5.5}
-                pathOptions={{
-                  color,
-                  weight: isSelected ? 3 : 1,
-                  fillColor: color,
-                  fillOpacity: 0.8,
-                }}
+                position={[h.lat, h.lon]}
+                icon={fireIcon(h.risk, isSelected)}
                 eventHandlers={{
                   click: () => onSelectHotspot(isSelected ? null : h.id),
                 }}
               >
-                <Tooltip direction="top" offset={[0, -6]} opacity={0.95}>
+                <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
                   <strong>{h.province}</strong>
                   <br />
-                  {h.district} &middot; skor {h.score}
+                  {h.district} &middot; skor {h.score} &middot; risiko {h.risk}
                 </Tooltip>
-              </CircleMarker>
+              </Marker>
             );
           })}
 
@@ -123,9 +159,10 @@ export default function MapView({
           })}
 
         <FlyToSelected target={flyTarget} />
+        <ResetView resetKey={resetKey} />
       </MapContainer>
       <span className="map-caption">
-        Titik: hotspot satelit (bulat) &amp; gunung berapi (segitiga) &middot; garis: arah aliran angin (ilustratif)
+        Titik: hotspot satelit (ikon api, ukuran &amp; warna sesuai risiko) &amp; gunung berapi (segitiga) &middot; garis: arah aliran angin (ilustratif)
       </span>
     </div>
   );

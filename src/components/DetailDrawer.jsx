@@ -1,5 +1,13 @@
 import { formatClock, formatTimeAgo } from "../utils/geo";
 
+const RISK_TIERS = [
+  { key: "low", label: "RENDAH" },
+  { key: "medium", label: "SEDANG" },
+  { key: "high", label: "TINGGI" },
+];
+
+const RISK_LABEL = { low: "Rendah", medium: "Sedang", high: "Tinggi" };
+
 export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
   if (!hotspot) return null;
   const h = hotspot;
@@ -8,13 +16,27 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
     <aside className="drawer">
       <div className="drawer-header">
         <div>
-          <div className="drawer-id">{h.id}</div>
+          <div className="drawer-id">SEKTOR &middot; {h.id}</div>
           <div className="drawer-title">{h.province}</div>
           <div className="drawer-id">{h.district}</div>
         </div>
         <button className="drawer-close" onClick={onClose} aria-label="Tutup detail">
-          &times;
+          <span className="msi">close</span>
         </button>
+      </div>
+
+      <div className="tier-bar">
+        {RISK_TIERS.map((t) => (
+          <span key={t.key} className={`tier-bar-seg${t.key === h.risk ? " active" : ""}`} data-tier={t.key}>
+            {t.label}
+          </span>
+        ))}
+      </div>
+
+      <div className={`status-banner status-${h.risk}`}>
+        <span className="status-dot-lg" />
+        STATUS RISIKO: {RISK_LABEL[h.risk].toUpperCase()}
+        <span className="status-banner-time">Update {formatClock(h.acquired)} WIB</span>
       </div>
 
       <div className="score-block">
@@ -26,35 +48,56 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
         </div>
       </div>
 
-      <div className="detail-grid">
-        <div className="detail-item">
-          <div className="k">Koordinat</div>
-          <div className="v">{h.lat.toFixed(4)}, {h.lon.toFixed(4)}</div>
+      <div>
+        <div className="drawer-section-title">
+          <span className="msi">sensors</span> Telemetri hotspot
         </div>
-        <div className="detail-item">
-          <div className="k">Satelit</div>
-          <div className="v">{h.satellite}</div>
-        </div>
-        <div className="detail-item">
-          <div className="k">Fire Radiative Power</div>
-          <div className="v">{h.frp} MW</div>
-        </div>
-        <div className="detail-item">
-          <div className="k">Tutupan lahan</div>
-          <div className="v">{h.landCover}</div>
-        </div>
-        <div className="detail-item">
-          <div className="k">Indikasi asap</div>
-          <div className="v">{h.smoke ? "Terdeteksi" : "Tidak terdeteksi"}</div>
-        </div>
-        <div className="detail-item">
-          <div className="k">Kemunculan berulang</div>
-          <div className="v">{h.recurring ? "Ya, lokasi sama" : "Tidak"}</div>
+        <div className="telemetry-grid">
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">my_location</span> Koordinat
+            </div>
+            <div className="telemetry-v">
+              {h.lat.toFixed(4)}, {h.lon.toFixed(4)}
+            </div>
+          </div>
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">satellite_alt</span> Satelit
+            </div>
+            <div className="telemetry-v">{h.satellite}</div>
+          </div>
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">local_fire_department</span> Fire Radiative Power
+            </div>
+            <div className="telemetry-v accent-ember">{h.frp} <span className="unit">MW</span></div>
+          </div>
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">forest</span> Tutupan lahan
+            </div>
+            <div className="telemetry-v">{h.landCover}</div>
+          </div>
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">airwave</span> Indikasi asap
+            </div>
+            <div className="telemetry-v">{h.smoke ? "Terdeteksi" : "Tidak terdeteksi"}</div>
+          </div>
+          <div className="telemetry-card">
+            <div className="telemetry-k">
+              <span className="msi">history</span> Kemunculan berulang
+            </div>
+            <div className="telemetry-v">{h.recurring ? "Ya, lokasi sama" : "Tidak"}</div>
+          </div>
         </div>
       </div>
 
       <div>
-        <div className="drawer-section-title">CCTV terdekat</div>
+        <div className="drawer-section-title">
+          <span className="msi">videocam</span> CCTV terdekat
+        </div>
         {h.cctv.length === 0 ? (
           <p className="empty-hint">Belum ada CCTV publik/berizin dalam radius pemantauan.</p>
         ) : (
@@ -71,7 +114,9 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
       </div>
 
       <div>
-        <div className="drawer-section-title">Akses jalan</div>
+        <div className="drawer-section-title">
+          <span className="msi">route</span> Akses jalan
+        </div>
         {h.roads.length === 0 ? (
           <p className="empty-hint">Data akses jalan di sekitar lokasi belum tersedia.</p>
         ) : (
@@ -89,7 +134,9 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
       </div>
 
       <div>
-        <div className="drawer-section-title">Fire tracking timeline</div>
+        <div className="drawer-section-title">
+          <span className="msi">timeline</span> Kronologi &amp; fire tracking
+        </div>
         <div className="timeline">
           {h.timeline.map((t, i) => (
             <div className="timeline-row" key={i}>
@@ -116,6 +163,15 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
         Hotspot merupakan lokasi perkiraan anomali termal dari citra satelit, bukan konfirmasi pasti adanya api.
         Gunakan CCTV dan verifikasi lapangan sebelum mengambil tindakan.
       </p>
+
+      <div className="drawer-actions">
+        <button className="btn-secondary" onClick={onClose}>
+          <span className="msi">visibility</span> Tutup Detail
+        </button>
+        <button className="btn-danger" disabled title="Simulasi — belum terhubung ke posko siaga">
+          <span className="msi">sos</span> SOS Darurat
+        </button>
+      </div>
     </aside>
   );
 }

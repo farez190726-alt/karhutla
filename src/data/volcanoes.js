@@ -4,10 +4,10 @@
 // DATA CONTOH untuk keperluan prototipe, bukan status resmi real-time.
 
 const LEVEL_META = {
-  1: { label: "Normal", color: "#5aa88f" },
-  2: { label: "Waspada", color: "#e0a53c" },
-  3: { label: "Siaga", color: "#ff7a45" },
-  4: { label: "Awas", color: "#e0472c" },
+  1: { label: "Normal", color: "#10b981" },
+  2: { label: "Waspada", color: "#f59e0b" },
+  3: { label: "Siaga", color: "#f97316" },
+  4: { label: "Awas", color: "#ef4444" },
 };
 
 const rawVolcanoes = [

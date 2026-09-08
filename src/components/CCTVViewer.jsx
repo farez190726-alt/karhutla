@@ -98,7 +98,12 @@ export default function CCTVViewer({ camera, hotspot, onClose }) {
               <span className="dot" />
               {camera.status === "online" ? "LIVE" : "TIDAK ADA SINYAL"}
             </span>
-            <span className="cctv-clock">{clock.toLocaleTimeString("id-ID")}</span>
+            <span className="cctv-clock">
+              <span className="msi" style={{ fontSize: 14, verticalAlign: "-2px", marginRight: 4 }}>
+                schedule
+              </span>
+              {clock.toLocaleTimeString("id-ID")}
+            </span>
           </div>
 
           <div className="cctv-hud-bottom">
@@ -118,7 +123,12 @@ export default function CCTVViewer({ camera, hotspot, onClose }) {
             Simulasi tampilan kamera untuk prototipe. Hubungkan ke stream RTSP/HLS sungguhan dari kamera
             berizin untuk menggantikan tampilan ini di implementasi produksi.
           </p>
-          <button onClick={onClose}>Tutup</button>
+          <button onClick={onClose}>
+            <span className="msi" style={{ fontSize: 16, verticalAlign: "-3px", marginRight: 4 }}>
+              close
+            </span>
+            Tutup
+          </button>
         </div>
       </div>
     </div>
