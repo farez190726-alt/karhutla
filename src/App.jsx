@@ -233,14 +233,14 @@ function App() {
           </div>
           <span className="live-badge">
             <span className="dot" />
-            LIVE
+            <span className="live-badge-label">LIVE</span>
           </span>
         </div>
 
         <div className="topbar-actions">
           <div className="topbar-aqi-chip" onClick={() => setActiveTab("aqi")} role="button" tabIndex={0}>
             <span className="topbar-aqi-dot" />
-            <span>AQI Rata-rata: <strong>{aqiSummary.averageAqi}</strong></span>
+            <span><span className="topbar-aqi-label">AQI Rata-rata: </span><strong>{aqiSummary.averageAqi}</strong></span>
           </div>
           <span className="topbar-meta-item">
             <span className="sync-dot" />
