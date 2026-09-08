@@ -11,6 +11,7 @@ export default function VolcanoDrawer({ volcano, onClose }) {
 
   return (
     <aside className="drawer">
+      <div className="mobile-drawer-handle" />
       <div className="drawer-header">
         <div>
           <div className="drawer-id">{v.id}</div>

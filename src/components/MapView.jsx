@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet"
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import WindLayer from "./WindLayer";
+import AQILayer from "./AQILayer";
+import AQILegend from "./AQILegend";
 
 const RISK_COLOR = {
   high: "#ef4444",
@@ -10,8 +12,6 @@ const RISK_COLOR = {
   low: "#10b981",
 };
 
-// Base pixel size + glow spread per risk tier, so "tinggi/sedang/rendah" read as
-// visually distinct fire icons at a glance, not just three colors of the same dot.
 const RISK_FIRE_STYLE = {
   high: { size: 30, glow: 14, pulse: true },
   medium: { size: 24, glow: 9, pulse: false },
@@ -33,8 +33,6 @@ function volcanoIcon(color, selected) {
   });
 }
 
-// One flame glyph, recolored/resized/animated per risk tier so "high" fires read
-// as bigger, brighter and (via CSS) flickering, while "low" is a small, calm ember.
 function fireIcon(risk, selected) {
   const base = RISK_FIRE_STYLE[risk] || RISK_FIRE_STYLE.low;
   const size = selected ? base.size + 8 : base.size;
@@ -52,70 +50,90 @@ function fireIcon(risk, selected) {
   });
 }
 
-// Recenters/zooms the map when the selection changes, without remounting it.
 function FlyToSelected({ target }) {
   const map = useMap();
   useEffect(() => {
     if (target) {
-      map.flyTo([target.lat, target.lon], Math.max(map.getZoom(), 7), { duration: 0.6 });
+      map.flyTo([target.lat, target.lon], Math.max(map.getZoom(), 8), { duration: 0.6 });
     }
   }, [target, map]);
   return null;
 }
 
-// Flies back to the default Indonesia-wide view whenever the "pusatkan peta"
-// toolbar button is pressed (resetKey increments), without remounting the map.
 function ResetView({ resetKey }) {
   const map = useMap();
   useEffect(() => {
     if (resetKey > 0) {
       map.flyTo(INDONESIA_CENTER, 5, { duration: 0.7 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey]);
+  }, [resetKey, map]);
   return null;
 }
 
 export default function MapView({
   hotspots,
   volcanoes,
+  aqiStations = [],
   selected,
   onSelectHotspot,
   onSelectVolcano,
-  showHotspots,
-  showVolcanoes,
-  showWind,
+  onSelectStation,
+  showHotspots = true,
+  showVolcanoes = true,
+  showWind = true,
+  showAQI = true,
+  showAQIHeatmap = true,
   resetKey = 0,
+  onToggleSidebar,
 }) {
   const flyTarget = useMemo(() => {
     if (!selected) return null;
-    return selected.kind === "hotspot"
-      ? hotspots.find((h) => h.id === selected.id) || null
-      : volcanoes.find((v) => v.id === selected.id) || null;
-  }, [selected, hotspots, volcanoes]);
+    if (selected.kind === "hotspot") {
+      return hotspots.find((h) => h.id === selected.id) || null;
+    }
+    if (selected.kind === "volcano") {
+      return volcanoes.find((v) => v.id === selected.id) || null;
+    }
+    if (selected.kind === "aqi") {
+      return aqiStations.find((s) => s.id === selected.id) || null;
+    }
+    return null;
+  }, [selected, hotspots, volcanoes, aqiStations]);
 
   return (
     <div className="map-wrap">
       <span className="map-scan-hint">
-        <span className="msi">satellite_alt</span> LIVE &middot; OpenStreetMap / CARTO
+        <span className="msi">satellite_alt</span> LIVE &middot; OpenStreetMap / CARTO &middot; IQAir AQI
       </span>
+
       <MapContainer
         center={INDONESIA_CENTER}
         zoom={5}
         minZoom={4}
-        maxZoom={12}
+        maxZoom={13}
         scrollWheelZoom
         style={{ width: "100%", height: "100%", background: "var(--bg)" }}
-        attributionControl={true}
+        attributionControl={false}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           subdomains="abcd"
+          maxZoom={19}
         />
 
+        {/* Lapisan Aliran Angin Dinamis */}
         <WindLayer visible={showWind} />
 
+        {/* Lapisan Kualitas Udara (Stasiun & Heatmap) */}
+        <AQILayer
+          stations={aqiStations}
+          selectedId={selected?.kind === "aqi" ? selected.id : null}
+          onSelectStation={(id) => onSelectStation(id)}
+          showHeatmap={showAQIHeatmap}
+          visible={showAQI}
+        />
+
+        {/* Lapisan Titik Hotspot Karhutla */}
         {showHotspots &&
           hotspots.map((h) => {
             const isSelected = selected?.kind === "hotspot" && selected.id === h.id;
@@ -137,6 +155,7 @@ export default function MapView({
             );
           })}
 
+        {/* Lapisan Gunung Berapi */}
         {showVolcanoes &&
           volcanoes.map((v) => {
             const isSelected = selected?.kind === "volcano" && selected.id === v.id;
@@ -161,8 +180,26 @@ export default function MapView({
         <FlyToSelected target={flyTarget} />
         <ResetView resetKey={resetKey} />
       </MapContainer>
+
+      {/* Legenda Indeks Kualitas Udara Mengambang */}
+      {showAQI && <AQILegend />}
+
+      {/* Floating Toolbar Peta */}
+      <div className="map-toolbar">
+        {onToggleSidebar && (
+          <button
+            className="map-tool-btn"
+            onClick={onToggleSidebar}
+            title="Buka panel telemetri"
+            aria-label="Panel telemetri"
+          >
+            <span className="msi">tune</span>
+          </button>
+        )}
+      </div>
+
       <span className="map-caption">
-        Titik: hotspot satelit (ikon api, ukuran &amp; warna sesuai risiko) &amp; gunung berapi (segitiga) &middot; garis: arah aliran angin (ilustratif)
+        Pin angka: Stasiun AQI &middot; Ikon api: Hotspot satelit &middot; Segitiga: Gunung berapi &middot; Garis: Aliran angin dinamis
       </span>
     </div>
   );

@@ -1,3 +1,5 @@
+import { aqiStations, aqiSummary, getAqiCategory } from "../data/airQuality";
+
 export default function Sidebar({
   summary,
   volcanoSummary,
@@ -7,6 +9,8 @@ export default function Sidebar({
   onToggleLayer,
   volcanoes,
   onSelectVolcano,
+  onSelectStation,
+  onCloseMobile,
 }) {
   const filters = [
     { key: "all", label: "Semua hotspot", count: summary.total },
@@ -16,51 +20,71 @@ export default function Sidebar({
   ];
 
   const layerToggles = [
-    { key: "showHotspots", label: "Titik hotspot" },
-    { key: "showVolcanoes", label: "Gunung berapi" },
-    { key: "showWind", label: "Arah angin" },
+    { key: "showAQI", label: "Stasiun Kualitas Udara (AQI)", icon: "air" },
+    { key: "showAQIHeatmap", label: "Heatmap Polusi Udara", icon: "grain" },
+    { key: "showHotspots", label: "Titik Hotspot Karhutla", icon: "local_fire_department" },
+    { key: "showVolcanoes", label: "Gunung Berapi (MAGMA)", icon: "volcano" },
+    { key: "showWind", label: "Aliran Angin Dinamis", icon: "waves" },
   ];
 
   const sortedVolcanoes = [...volcanoes].sort((a, b) => b.level - a.level);
+  const sortedAqiCities = [...aqiStations].sort((a, b) => b.aqi - a.aqi);
 
   return (
     <aside className="sidebar">
+      {/* Header khusus mobile dengan tombol tutup */}
+      <div className="sidebar-mobile-header">
+        <div className="sidebar-mobile-title">
+          <span className="msi">tune</span>
+          <span>Panel Kontrol &amp; Telemetri</span>
+        </div>
+        <button
+          className="sidebar-close-btn"
+          onClick={onCloseMobile}
+          aria-label="Tutup menu"
+          type="button"
+        >
+          <span className="msi">close</span>
+        </button>
+      </div>
+
+      {/* Ringkasan Kualitas Udara Nasional (IQAir Style) */}
       <div>
         <div className="sidebar-section-title">
-          <span className="msi">query_stats</span> Ringkasan hari ini
+          <span className="msi">air</span> Kualitas Udara Hari Ini
         </div>
         <div className="stat-grid">
+          <div className="stat-card medium full">
+            <div className="stat-value">{aqiSummary.averageAqi}</div>
+            <div className="stat-label">Rata-rata AQI Nasional (Kategori Sedang)</div>
+          </div>
           <div className="stat-card high">
-            <div className="stat-value">{summary.high}</div>
-            <div className="stat-label">Hotspot risiko tinggi</div>
-          </div>
-          <div className="stat-card medium">
-            <div className="stat-value">{summary.medium}</div>
-            <div className="stat-label">Hotspot risiko sedang</div>
-          </div>
-          <div className="stat-card low">
-            <div className="stat-value">{summary.low}</div>
-            <div className="stat-label">Hotspot risiko rendah</div>
+            <div className="stat-value">{aqiSummary.mostPollutedCity?.aqi}</div>
+            <div className="stat-label">
+              Tertinggi: {aqiSummary.mostPollutedCity?.city}
+            </div>
           </div>
           <div className="stat-card safe">
-            <div className="stat-value">{summary.safeAreaPct}%</div>
-            <div className="stat-label">Area terpantau aman</div>
-          </div>
-          <div className="stat-card high full">
-            <div className="stat-value">{volcanoSummary.awas + volcanoSummary.siaga}</div>
-            <div className="stat-label">Gunung berapi status Siaga/Awas</div>
+            <div className="stat-value">{aqiSummary.cleanestCity?.aqi}</div>
+            <div className="stat-label">
+              Terbersih: {aqiSummary.cleanestCity?.city}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Kontrol Lapisan Peta */}
       <div>
         <div className="sidebar-section-title">
-          <span className="msi">layers</span> Lapisan peta
+          <span className="msi">layers</span> Lapisan Peta
         </div>
         <div className="filter-list">
           {layerToggles.map((l) => (
             <label className="filter-row layer-row" key={l.key}>
-              <span>{l.label}</span>
+              <span className="layer-row-label">
+                <span className="msi layer-icon">{l.icon}</span>
+                {l.label}
+              </span>
               <input
                 type="checkbox"
                 checked={layers[l.key]}
@@ -71,9 +95,72 @@ export default function Sidebar({
         </div>
       </div>
 
+      {/* Peringkat Kualitas Udara Kota (IQAir City Ranking) */}
       <div>
         <div className="sidebar-section-title">
-          <span className="msi">filter_alt</span> Saring hotspot
+          <span className="msi">format_list_numbered</span> Peringkat Polusi Kota
+        </div>
+        <div className="city-aqi-ranking">
+          {sortedAqiCities.slice(0, 7).map((c, idx) => {
+            const tier = getAqiCategory(c.aqi);
+            return (
+              <div
+                key={c.id}
+                className="city-aqi-row"
+                onClick={() => {
+                  if (onSelectStation) onSelectStation(c.id);
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && onSelectStation && onSelectStation(c.id)}
+              >
+                <span className="city-rank">#{idx + 1}</span>
+                <div className="city-name-wrap">
+                  <span className="city-name">{c.city}</span>
+                  <span className="city-sub">{c.name}</span>
+                </div>
+                <span
+                  className="city-aqi-badge"
+                  style={{ backgroundColor: tier.color, color: tier.textColor }}
+                >
+                  {c.aqi}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Ringkasan Karhutla & Gunung */}
+      <div>
+        <div className="sidebar-section-title">
+          <span className="msi">local_fire_department</span> Hotspot &amp; Karhutla
+        </div>
+        <div className="stat-grid">
+          <div className="stat-card high">
+            <div className="stat-value">{summary.high}</div>
+            <div className="stat-label">Risiko tinggi</div>
+          </div>
+          <div className="stat-card medium">
+            <div className="stat-value">{summary.medium}</div>
+            <div className="stat-label">Risiko sedang</div>
+          </div>
+          <div className="stat-card low">
+            <div className="stat-value">{summary.low}</div>
+            <div className="stat-label">Risiko rendah</div>
+          </div>
+          <div className="stat-card high full">
+            <div className="stat-value">{volcanoSummary.awas + volcanoSummary.siaga}</div>
+            <div className="stat-label">Gunung status Siaga/Awas</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Saring Hotspot */}
+      <div>
+        <div className="sidebar-section-title">
+          <span className="msi">filter_alt</span> Saring Hotspot
         </div>
         <div className="filter-list">
           {filters.map((f) => (
@@ -92,16 +179,20 @@ export default function Sidebar({
         </div>
       </div>
 
+      {/* Gunung Berapi */}
       <div>
         <div className="sidebar-section-title">
-          <span className="msi">volcano</span> Gunung berapi
+          <span className="msi">volcano</span> Gunung Berapi
         </div>
         <div className="filter-list">
           {sortedVolcanoes.map((v) => (
             <div
               key={v.id}
               className="filter-row volcano-row"
-              onClick={() => onSelectVolcano(v.id)}
+              onClick={() => {
+                onSelectVolcano(v.id);
+                if (onCloseMobile) onCloseMobile();
+              }}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && onSelectVolcano(v.id)}
@@ -115,38 +206,9 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div>
-        <div className="sidebar-section-title">
-          <span className="msi">map</span> Legenda
-        </div>
-        <div className="legend">
-          <div className="legend-row">
-            <span className="legend-dot" style={{ background: "var(--risk-high)" }} />
-            Hotspot risiko tinggi
-          </div>
-          <div className="legend-row">
-            <span className="legend-dot" style={{ background: "var(--risk-medium)" }} />
-            Hotspot risiko sedang
-          </div>
-          <div className="legend-row">
-            <span className="legend-dot" style={{ background: "var(--risk-low)" }} />
-            Hotspot risiko rendah
-          </div>
-          <div className="legend-row">
-            <span className="legend-tri" />
-            Gunung berapi (warna = status)
-          </div>
-          <div className="legend-row">
-            <span className="legend-line" />
-            Arah aliran angin (ilustratif)
-          </div>
-        </div>
-      </div>
-
       <div className="sidebar-note">
-        Fire Risk Score dihitung dari confidence satelit, keberadaan asap, riwayat kemunculan berulang, dan jenis
-        tutupan lahan. Status gunung berapi dan medan angin di peta ini adalah data contoh, bukan data resmi
-        real-time &mdash; verifikasi lapangan dan sumber resmi tetap diperlukan.
+        Peta menggabungkan indeks kualitas udara US AQI (IQAir format), data titik panas karhutla, status
+        aktivitas vulkanik MAGMA Indonesia, dan medan aliran angin meteorologis dinamis.
       </div>
     </aside>
   );

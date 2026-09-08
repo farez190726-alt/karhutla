@@ -14,6 +14,7 @@ export default function DetailDrawer({ hotspot, onClose, nowMs, onViewCctv }) {
 
   return (
     <aside className="drawer">
+      <div className="mobile-drawer-handle" />
       <div className="drawer-header">
         <div>
           <div className="drawer-id">SEKTOR &middot; {h.id}</div>
