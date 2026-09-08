@@ -170,7 +170,158 @@ const rawHotspots = [
   },
 ];
 
-export const hotspots = rawHotspots.map((h) => ({ ...h, risk: riskFromScore(h.score) }));
+// ---------------------------------------------------------------------------
+// Dense generated hotspot field
+//
+// A handful of hand-authored hotspots (above) carry full detail — CCTV, road
+// access, a multi-step timeline — to show what a fully verified record looks
+// like. Real satellite feeds during peak karhutla season show dozens to
+// hundreds of points clustered over peatland districts, so the rest of the
+// dataset is generated around known fire-prone clusters with a seeded random
+// generator (deterministic, so the demo looks the same on every load).
+// ---------------------------------------------------------------------------
+
+function mulberry32(seed) {
+  let a = seed;
+  return function rand() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const rand = mulberry32(19820804);
+const pick = (arr) => arr[Math.floor(rand() * arr.length)];
+
+const CLUSTERS = [
+  {
+    province: "Kalimantan Tengah",
+    districts: ["Pulang Pisau", "Kapuas", "Kotawaringin Timur", "Katingan", "Seruyan"],
+    center: [-2.3, 113.9],
+    spread: 0.9,
+    count: 22,
+    landCover: ["Lahan gambut", "Lahan gambut & semak", "Semak belukar"],
+  },
+  {
+    province: "Riau",
+    districts: ["Bengkalis", "Rokan Hilir", "Pelalawan", "Siak", "Indragiri Hilir"],
+    center: [1.0, 101.6],
+    spread: 0.8,
+    count: 18,
+    landCover: ["Lahan gambut", "Perkebunan & lahan gambut", "Semak belukar"],
+  },
+  {
+    province: "Sumatera Selatan",
+    districts: ["Ogan Komering Ilir", "Banyuasin", "Musi Banyuasin"],
+    center: [-3.0, 104.8],
+    spread: 0.7,
+    count: 16,
+    landCover: ["Perkebunan & lahan gambut", "Lahan gambut", "Semak belukar"],
+  },
+  {
+    province: "Kalimantan Barat",
+    districts: ["Ketapang", "Kubu Raya", "Sintang", "Kayong Utara"],
+    center: [-0.6, 110.4],
+    spread: 0.9,
+    count: 14,
+    landCover: ["Hutan sekunder", "Lahan gambut", "Semak belukar"],
+  },
+  {
+    province: "Jambi",
+    districts: ["Muaro Jambi", "Tanjung Jabung Timur", "Tanjung Jabung Barat"],
+    center: [-1.5, 103.5],
+    spread: 0.6,
+    count: 12,
+    landCover: ["Lahan gambut & semak", "Perkebunan"],
+  },
+  {
+    province: "Kalimantan Selatan",
+    districts: ["Banjar", "Hulu Sungai Selatan", "Tanah Laut"],
+    center: [-3.0, 115.2],
+    spread: 0.6,
+    count: 9,
+    landCover: ["Semak belukar", "Hutan sekunder"],
+  },
+  {
+    province: "Sumatera Utara",
+    districts: ["Labuhanbatu", "Labuhanbatu Selatan"],
+    center: [2.0, 99.9],
+    spread: 0.4,
+    count: 6,
+    landCover: ["Perkebunan", "Semak belukar"],
+  },
+  {
+    province: "Papua Selatan",
+    districts: ["Merauke"],
+    center: [-8.4, 140.3],
+    spread: 0.5,
+    count: 5,
+    landCover: ["Savana"],
+  },
+];
+
+let genCounter = 100;
+const generated = [];
+
+for (const cluster of CLUSTERS) {
+  for (let i = 0; i < cluster.count; i += 1) {
+    genCounter += 1;
+    const lat = cluster.center[0] + (rand() - 0.5) * cluster.spread;
+    const lon = cluster.center[1] + (rand() - 0.5) * cluster.spread;
+    const confidence = Math.round(30 + rand() * 65);
+    const frp = Math.round((2 + rand() * 55) * 10) / 10;
+    const smoke = rand() > 0.55;
+    const recurring = rand() > 0.7;
+    const hourAgo = rand() * 9;
+    const acquired = new Date(Date.now() - hourAgo * 3600 * 1000).toISOString();
+
+    let score = Math.round(
+      confidence * 0.45 + Math.min(frp, 60) * 0.7 + (smoke ? 12 : 0) + (recurring ? 10 : 0) + rand() * 8
+    );
+    score = Math.max(8, Math.min(97, score));
+
+    const hasInfra = rand() > 0.72;
+    const distanceToRoadKm = Math.round((1.5 + rand() * 14) * 10) / 10;
+
+    generated.push({
+      id: `HS-${genCounter}`,
+      province: cluster.province,
+      district: pick(cluster.districts),
+      lat: Math.round(lat * 1000) / 1000,
+      lon: Math.round(lon * 1000) / 1000,
+      acquired,
+      confidence,
+      frp,
+      satellite: pick(["Suomi NPP / VIIRS", "NOAA-20 / VIIRS", "NOAA-21 / VIIRS"]),
+      landCover: pick(cluster.landCover),
+      score,
+      smoke,
+      recurring,
+      distanceToRoadKm,
+      cctv: hasInfra
+        ? [
+            {
+              id: `CCTV-${genCounter}`,
+              label: `Pos Pantau ${pick(cluster.districts)}`,
+              distanceKm: Math.round((1 + rand() * 6) * 10) / 10,
+              status: rand() > 0.25 ? "online" : "offline",
+            },
+          ]
+        : [],
+      roads: hasInfra
+        ? [{ name: `Jalan Kabupaten ${pick(cluster.districts)}`, status: pick(["lancar", "padat", "ditutup"]) }]
+        : [],
+      timeline: [
+        { time: "—", label: "Hotspot terdeteksi dari citra satelit", risk: Math.max(15, score - 15) },
+        { time: "—", label: smoke ? "Asap terindikasi pada citra terbaru" : "Belum ada indikasi asap", risk: score },
+      ],
+    });
+  }
+}
+
+export const hotspots = [...rawHotspots, ...generated].map((h) => ({ ...h, risk: riskFromScore(h.score) }));
 
 export const summary = {
   total: hotspots.length,

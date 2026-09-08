@@ -1,10 +1,8 @@
-export default function AlertBanner({ hotspot, onView, onDismiss }) {
-  if (!hotspot) return null;
+export default function AlertBanner({ title, message, onView, onDismiss }) {
   return (
     <div className="alert-banner">
       <span>
-        <strong>Peringatan dini &mdash; risiko tinggi.</strong> {hotspot.province}, {hotspot.district} &middot; skor{" "}
-        {hotspot.score}/100 &middot; {hotspot.cctv.length} CCTV dalam radius pemantauan.
+        <strong>{title}</strong> {message}
       </span>
       <button onClick={onView}>Lihat detail</button>
       <button onClick={onDismiss} aria-label="Tutup peringatan">
