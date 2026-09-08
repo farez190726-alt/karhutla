@@ -41,6 +41,32 @@ sungguhan bisa di-zoom/geser, dan marker mengikuti koordinat asli tiap hotspot.
 Untuk produksi, pertimbangkan mendaftar tile provider berbayar (mis. Mapbox/MapTiler)
 jika trafiknya tinggi, karena tile gratis punya batas wajar pemakaian.
 
+## Kepadatan hotspot
+
+`src/data/hotspots.js` sekarang menggabungkan beberapa hotspot yang dibuat manual
+dengan detail lengkap (CCTV, jalan, timeline) dan puluhan hotspot lain yang dibuat
+otomatis (generator dengan seed tetap) tersebar di klaster wilayah rawan karhutla
+(Kalimantan Tengah, Riau, Sumatera Selatan, Kalimantan Barat, Jambi, Kalimantan
+Selatan, Sumatera Utara, Papua Selatan) — totalnya sekitar seratus titik, supaya
+peta terasa padat seperti peta hotspot sungguhan saat musim kebakaran.
+
+## Gunung berapi
+
+Layer baru menampilkan aktivitas gunung berapi memakai skema level PVMBG/MAGMA
+Indonesia (I Normal &rarr; IV Awas), lihat `src/data/volcanoes.js`. **Status di
+dalamnya adalah data contoh untuk prototipe, bukan status resmi real-time** — untuk
+data produksi, sambungkan ke API MAGMA Indonesia (Badan Geologi, ESDM) dan ganti isi
+file data ini.
+
+## Arah angin
+
+`src/components/WindLayer.jsx` menggambar partikel bergerak di atas peta mengikuti
+medan angin sederhana (`src/data/wind.js`) hasil interpolasi beberapa titik kontrol
+arah + kecepatan. ​Ini murni ilustratif (untuk menunjukkan konsep seperti pada peta
+IQAir/Windy), bukan data meteorologi real-time. Untuk data sungguhan, ganti
+`WIND_CONTROL_POINTS` dengan hasil query API cuaca (mis. Open-Meteo, BMKG, atau
+GFS) yang di-resample ke grid serupa.
+
 ## CCTV
 
 Karena prototipe ini belum terhubung ke kamera sungguhan, tombol **Lihat/Cek** pada
