@@ -203,18 +203,11 @@ function App() {
 
   return (
     <div className="app">
-      {/* Mobile Backdrops */}
+      {/* Mobile Sidebar Backdrop (hanya saat menu mobile terbuka) */}
       {sidebarOpen && (
         <div
           className="sidebar-backdrop active"
           onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-      {selected && (
-        <div
-          className="drawer-backdrop active"
-          onClick={() => setSelected(null)}
           aria-hidden="true"
         />
       )}
