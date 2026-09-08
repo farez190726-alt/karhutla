@@ -162,6 +162,7 @@ function App() {
     showVolcanoes: true,
     showWind: true,
   });
+  const [basemap, setBasemap] = useState("carto_dark");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [activeTab, setActiveTab] = useState("map");
@@ -288,6 +289,8 @@ function App() {
           onSelectVolcano={(id) => setSelected({ kind: "volcano", id })}
           onSelectStation={handleSelectStation}
           onCloseMobile={() => setSidebarOpen(false)}
+          basemap={basemap}
+          onBasemapChange={setBasemap}
         />
 
         <div className="map-column">
@@ -308,6 +311,8 @@ function App() {
                   showAQI={layers.showAQI}
                   showAQIHeatmap={layers.showAQIHeatmap}
                   resetKey={resetKey}
+                  basemap={basemap}
+                  onBasemapChange={setBasemap}
                   onToggleSidebar={() => setSidebarOpen((s) => !s)}
                 />
 

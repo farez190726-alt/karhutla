@@ -2354,3 +2354,138 @@
     font-size: 1.5rem;
   }
 }
+
+/* ---------- Basemap Switcher UI ---------- */
+.basemap-popup-menu {
+  position: absolute;
+  top: 58px;
+  right: 14px;
+  z-index: 950;
+  background: var(--panel-glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  width: 290px;
+  max-width: calc(100vw - 28px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75);
+  animation: fadeInDown 0.18s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.basemap-popup-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.basemap-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.basemap-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.basemap-option-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--panel-soft);
+}
+
+.basemap-option-btn.active {
+  border-color: var(--ember);
+  background: var(--panel-soft);
+}
+
+.basemap-option-btn .msi {
+  font-size: 20px;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.basemap-option-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.basemap-option-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.basemap-option-sub {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.basemap-option-btn .check-icon {
+  color: var(--safe);
+  font-size: 18px;
+  margin-left: auto;
+}
+
+/* Basemap row in sidebar */
+.basemap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.basemap-text-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.basemap-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.basemap-desc {
+  font-size: 0.67rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.basemap-row.active {
+  border-color: var(--ember);
+  background: var(--panel-soft);
+}
+
+.basemap-row .active-check {
+  color: var(--safe);
+  font-size: 18px;
+}

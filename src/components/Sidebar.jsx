@@ -11,6 +11,8 @@ export default function Sidebar({
   onSelectVolcano,
   onSelectStation,
   onCloseMobile,
+  basemap = "carto_dark",
+  onBasemapChange,
 }) {
   const filters = [
     { key: "all", label: "Semua hotspot", count: summary.total },
@@ -91,6 +93,53 @@ export default function Sidebar({
                 onChange={() => onToggleLayer(l.key)}
               />
             </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Citra Peta Dasar & Satelit Kamera */}
+      <div>
+        <div className="sidebar-section-title">
+          <span className="msi">satellite_alt</span> Citra Peta / Satelit
+        </div>
+        <div className="filter-list">
+          {[
+            {
+              id: "carto_dark",
+              label: "CARTO Dark (Taktis)",
+              desc: "API Key terpasang (Bebas Watermark)",
+              icon: "dark_mode",
+            },
+            {
+              id: "satellite_hd",
+              label: "Satelit Optik HD (Kamera Nyata)",
+              desc: "Kamera optik, bisa zoom in detail kawah & daratan",
+              icon: "satellite_alt",
+            },
+            {
+              id: "esri_satellite",
+              label: "Esri World Imagery",
+              desc: "Survei satelit optik bumi",
+              icon: "public",
+            },
+          ].map((b) => (
+            <div
+              key={b.id}
+              className={`filter-row basemap-row ${basemap === b.id ? "active" : ""}`}
+              onClick={() => onBasemapChange && onBasemapChange(b.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && onBasemapChange && onBasemapChange(b.id)}
+            >
+              <span className="layer-row-label">
+                <span className="msi layer-icon">{b.icon}</span>
+                <div className="basemap-text-col">
+                  <span className="basemap-title">{b.label}</span>
+                  <span className="basemap-desc">{b.desc}</span>
+                </div>
+              </span>
+              {basemap === b.id && <span className="msi active-check">check</span>}
+            </div>
           ))}
         </div>
       </div>

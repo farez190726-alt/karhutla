@@ -1,10 +1,43 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import WindLayer from "./WindLayer";
 import AQILayer from "./AQILayer";
 import AQILegend from "./AQILegend";
+
+export const BASEMAPS = {
+  carto_dark: {
+    id: "carto_dark",
+    name: "CARTO Dark (Taktis)",
+    shortName: "CARTO Dark",
+    icon: "dark_mode",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=cb1_31ew_1_94c3a7fa0397490a1e50fcef",
+    subdomains: "abcd",
+    maxZoom: 20,
+    scanHint: "LIVE · CARTO Dark (API Key Aktif: Bebas Watermark) · IQAir AQI",
+  },
+  satellite_hd: {
+    id: "satellite_hd",
+    name: "Satelit Optik HD (Kamera Nyata)",
+    shortName: "Satelit HD",
+    icon: "satellite_alt",
+    url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    subdomains: "abcd",
+    maxZoom: 20,
+    scanHint: "LIVE · Citra Satelit Kamera Langsung (Zoom Tinggi)",
+  },
+  esri_satellite: {
+    id: "esri_satellite",
+    name: "Esri World Imagery",
+    shortName: "Esri Satelit",
+    icon: "public",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    subdomains: "abcd",
+    maxZoom: 19,
+    scanHint: "LIVE · Esri World Imagery (Survey Satelit)",
+  },
+};
 
 const RISK_COLOR = {
   high: "#ef4444",
@@ -54,7 +87,7 @@ function FlyToSelected({ target }) {
   const map = useMap();
   useEffect(() => {
     if (target) {
-      map.flyTo([target.lat, target.lon], Math.max(map.getZoom(), 8), { duration: 0.6 });
+      map.flyTo([target.lat, target.lon], Math.max(map.getZoom(), 9), { duration: 0.6 });
     }
   }, [target, map]);
   return null;
@@ -84,8 +117,13 @@ export default function MapView({
   showAQI = true,
   showAQIHeatmap = true,
   resetKey = 0,
+  basemap = "carto_dark",
+  onBasemapChange,
   onToggleSidebar,
 }) {
+  const [showBasemapMenu, setShowBasemapMenu] = useState(false);
+  const currentBasemap = BASEMAPS[basemap] || BASEMAPS.carto_dark;
+
   const flyTarget = useMemo(() => {
     if (!selected) return null;
     if (selected.kind === "hotspot") {
@@ -103,22 +141,23 @@ export default function MapView({
   return (
     <div className="map-wrap">
       <span className="map-scan-hint">
-        <span className="msi">satellite_alt</span> LIVE &middot; OpenStreetMap / CARTO &middot; IQAir AQI
+        <span className="msi">{currentBasemap.icon}</span> {currentBasemap.scanHint}
       </span>
 
       <MapContainer
         center={INDONESIA_CENTER}
         zoom={5}
         minZoom={4}
-        maxZoom={13}
+        maxZoom={20}
         scrollWheelZoom
-        style={{ width: "100%", height: "100%", background: "var(--bg)" }}
+        style={{ width: "100%", height: "100%", background: "#05080c" }}
         attributionControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={19}
+          key={currentBasemap.id}
+          url={currentBasemap.url}
+          subdomains={currentBasemap.subdomains}
+          maxZoom={currentBasemap.maxZoom}
         />
 
         {/* Lapisan Aliran Angin Dinamis */}
@@ -184,8 +223,51 @@ export default function MapView({
       {/* Legenda Indeks Kualitas Udara Mengambang */}
       {showAQI && <AQILegend />}
 
+      {/* Menu Pemilihan Jenis Peta / Citra Satelit */}
+      {showBasemapMenu && (
+        <div className="basemap-popup-menu">
+          <div className="basemap-popup-title">
+            <span className="msi">layers</span> Pilih Citra Peta / Satelit
+          </div>
+          <div className="basemap-options-list">
+            {Object.values(BASEMAPS).map((b) => (
+              <button
+                key={b.id}
+                className={`basemap-option-btn ${basemap === b.id ? "active" : ""}`}
+                onClick={() => {
+                  if (onBasemapChange) onBasemapChange(b.id);
+                  setShowBasemapMenu(false);
+                }}
+                type="button"
+              >
+                <span className="msi">{b.icon}</span>
+                <div className="basemap-option-text">
+                  <div className="basemap-option-name">{b.name}</div>
+                  <div className="basemap-option-sub">
+                    {b.id === "carto_dark" && "Bebas watermark dengan API Key"}
+                    {b.id === "satellite_hd" && "Kamera optik nyata, zoom level 20"}
+                    {b.id === "esri_satellite" && "Foto survei satelit permukaan bumi"}
+                  </div>
+                </div>
+                {basemap === b.id && <span className="msi check-icon">check_circle</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Floating Toolbar Peta */}
       <div className="map-toolbar">
+        {/* Tombol Cepat Pengalih Citra Satelit / Mode Peta */}
+        <button
+          className={`map-tool-btn ${basemap === "satellite_hd" ? "active" : ""}`}
+          onClick={() => setShowBasemapMenu((s) => !s)}
+          title={`Ganti tampilan peta/satelit (Saat ini: ${currentBasemap.shortName})`}
+          aria-label="Pilih citra satelit atau peta"
+        >
+          <span className="msi">{currentBasemap.icon}</span>
+        </button>
+
         {onToggleSidebar && (
           <button
             className="map-tool-btn"
@@ -196,10 +278,24 @@ export default function MapView({
             <span className="msi">tune</span>
           </button>
         )}
+
+        <button
+          className="map-tool-btn"
+          onClick={() => {
+            if (onBasemapChange) {
+              const next = basemap === "carto_dark" ? "satellite_hd" : "carto_dark";
+              onBasemapChange(next);
+            }
+          }}
+          title={basemap === "satellite_hd" ? "Beralih ke CARTO Dark" : "Beralih ke Citra Satelit Kamera"}
+          aria-label="Beralih cepat satelit/peta"
+        >
+          <span className="msi">{basemap === "satellite_hd" ? "dark_mode" : "satellite_alt"}</span>
+        </button>
       </div>
 
       <span className="map-caption">
-        Pin angka: Stasiun AQI &middot; Ikon api: Hotspot satelit &middot; Segitiga: Gunung berapi &middot; Garis: Aliran angin dinamis
+        Mode: {currentBasemap.name} &middot; Zoom hingga level 20 untuk melihat kawah, vegetasi &amp; daratan secara riil
       </span>
     </div>
   );
